@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'" />
+    <title>Tree Forest · search trees, step by step</title>
+    <meta name="description" content="BST, AVL, red-black, splay, treap, B-tree, and heap: insert, delete, and search, with every rotation shown step by step. Compare them and benchmark them." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23e9f3e6'/><path d='M32 6 50 34H40l12 16H12l12-16H14z' fill='%233f7d4e'/><rect x='28' y='48' width='8' height='10' fill='%237a5634'/></svg>" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <svg class="hills" viewBox="0 0 1200 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,140 L0,77 L30,57 L60,41 L90,36 L120,44 L150,62 L180,86 L210,82 L240,68 L270,64 L300,67 L330,75 L360,84 L390,91 L420,94 L450,88 L480,81 L510,73 L540,67 L570,67 L600,76 L630,94 L660,73 L690,52 L720,38 L750,36 L780,47 L810,66 L840,88 L870,85 L900,76 L930,74 L960,77 L990,82 L1020,87 L1050,91 L1080,93 L1110,84 L1140,73 L1170,62 L1200,56 L1200,140 Z" fill="#cfe6c8" />
+        <path d="M0,140 L0,80 L30,89 L60,106 L90,112 L120,101 L150,98 L180,102 L210,109 L240,116 L270,115 L300,112 L330,109 L360,108 L390,109 L420,116 L450,108 L480,94 L510,86 L540,87 L570,100 L600,116 L630,97 L660,86 L690,87 L720,96 L750,110 L780,115 L810,109 L840,108 L870,110 L900,113 L930,116 L960,115 L990,108 L1020,101 L1050,97 L1080,102 L1110,115 L1140,103 L1170,87 L1200,80 L1200,140 Z" fill="#a9d29c" />
+      </svg>
+      <div class="title">
+        <h1>Tree Forest</h1>
+        <p>Seven trees of computer science. Insert, delete, and search keys, and watch every comparison, rotation, and split.</p>
+      </div>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Trees"></nav>
+    </header>
+
+    <p class="loading" id="loading" role="status">Planting the trees (loading the Go code)…</p>
+
+    <main id="main" hidden>
+      <!-- One view for every tree; app.js fills it for the tree of the tab -->
+      <section class="view" id="tree-view" aria-label="Tree">
+        <div class="grove">
+          <aside class="panel">
+            <h2 id="tree-name"></h2>
+            <p class="summary" id="tree-summary"></p>
+            <p class="fact" id="tree-search"></p>
+
+            <form class="keyform" id="keyform" autocomplete="off">
+              <label for="key">Key</label>
+              <div class="keyrow">
+                <input id="key" name="key" type="number" min="0" max="999" value="42" />
+                <button type="button" id="random-key" class="quiet" title="A random key">🎲</button>
+              </div>
+              <div class="ops">
+                <button type="submit" value="insert" class="main">Insert</button>
+                <button type="submit" value="delete">Delete</button>
+                <button type="submit" value="search">Search</button>
+              </div>
+            </form>
+
+            <label class="degree" id="degree-box" hidden>B-tree degree
+              <select id="degree">
+                <option value="2">2 (a 2-3-4 tree: 1 to 3 keys in a node)</option>
+                <option value="3">3 (2 to 5 keys in a node)</option>
+                <option value="4">4 (3 to 7 keys in a node)</option>
+              </select>
+            </label>
+
+            <h3>Automatic flows</h3>
+            <div class="flows" id="flows"></div>
+            <button type="button" id="clear" class="quiet wide">Clear the tree</button>
+          </aside>
+
+          <div class="stage">
+            <div class="canvas" id="canvas" aria-live="off"></div>
+            <div class="array" id="heap-array" hidden></div>
+            <div class="player">
+              <button type="button" id="prev" title="Back one step" aria-label="Back one step">⏮</button>
+              <button type="button" id="play" title="Pause" aria-label="Pause">⏸</button>
+              <button type="button" id="next" title="Forward one step" aria-label="Forward one step">⏭</button>
+              <label class="speed">Speed
+                <input id="speed" type="range" min="1" max="10" value="5" />
+              </label>
+              <span class="counter" id="counter"></span>
+            </div>
+            <p class="note" id="note" aria-live="polite">Insert a key, or run a flow.</p>
+            <dl class="stats" id="stats"></dl>
+            <ol class="log" id="log"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Compare -->
+      <section class="view" id="compare-view" aria-label="Compare" hidden>
+        <div class="toolbar">
+          <label>Keys <select id="cmp-pattern">
+            <option value="sorted">in order (the worst case of a BST)</option>
+            <option value="random">random</option>
+            <option value="reversed">in reverse order</option>
+            <option value="zigzag">zigzag: small, big, small, big</option>
+          </select></label>
+          <label>How many <input id="cmp-count" type="number" min="3" max="63" value="31" /></label>
+          <button type="button" id="cmp-run" class="main">Grow the forest</button>
+        </div>
+        <p class="summary">The same keys go into every tree, one at a time. Then every tree searches every key.</p>
+        <div class="groves" id="groves"></div>
+        <table class="table" id="cmp-table" hidden>
+          <thead><tr><th>Tree</th><th>Height</th><th>Best height</th><th>Restructures</th><th>Comparisons in a search</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- Benchmark -->
+      <section class="view" id="bench-view" aria-label="Benchmark" hidden>
+        <div class="toolbar">
+          <label>Keys <select id="bench-keys">
+            <option value="1000">1,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="100000">100,000</option>
+          </select></label>
+          <label>Order <select id="bench-pattern">
+            <option value="random">random</option>
+            <option value="sorted">in order</option>
+            <option value="reversed">in reverse order</option>
+            <option value="zigzag">zigzag</option>
+          </select></label>
+          <button type="button" id="bench-run" class="main">Run the benchmark</button>
+        </div>
+        <p class="summary">Each tree inserts all the keys, searches all of them, and deletes all of them, in the same order. With keys in order, a plain BST stops at 5,000 keys, because it becomes a line.</p>
+        <div class="progress" id="bench-progress" hidden><div></div></div>
+        <table class="table" id="bench-table" hidden>
+          <thead><tr><th>Tree</th><th>Keys</th><th>Insert</th><th>Search</th><th>Delete</th><th>Height</th><th>Comparisons in a search</th><th>Restructures</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="charts" id="bench-charts"></div>
+      </section>
+    </main>
+
+    <footer>
+      The trees are written in Go and run in your browser with WebAssembly.
+      <a href="https://github.com/rahelmartim/tree-forest" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

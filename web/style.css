@@ -1,0 +1,611 @@
+/* Tree Forest: moss, bark, and sky. */
+
+:root {
+  --sky: #eef6f0;
+  --meadow: #f6f3e8;
+  --panel: #fffdf7;
+  --line: #dfe5d6;
+  --text: #23332a;
+  --muted: #66766a;
+  --moss: #3f7d4e;
+  --pine: #23452f;
+  --leaf: #6fae5f;
+  --bark: #7a5634;
+  --plank: #d6b07c;
+  --sun: #f2c14e;
+  --berry: #c0392b;
+  --char: #2e2a26;
+  --sans: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--sky), var(--meadow) 60%);
+  color: var(--text);
+  font: 15px/1.5 var(--sans);
+}
+
+a {
+  color: var(--moss);
+}
+
+:focus-visible {
+  outline: 2px solid var(--sun);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Header */
+.top {
+  position: relative;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 26px 24px 0;
+}
+
+.hills {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 120px;
+}
+
+.title h1 {
+  margin: 0;
+  color: var(--pine);
+  font-size: 2.1rem;
+  letter-spacing: -0.01em;
+}
+
+.title p {
+  margin: 2px 0 14px;
+  color: var(--muted);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 12px;
+}
+
+.tabs button {
+  border-color: transparent;
+  background: rgba(255, 253, 247, 0.75);
+  font-weight: 600;
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--pine);
+  color: #fff;
+}
+
+.tabs .sep {
+  width: 12px;
+}
+
+.loading {
+  margin: 80px auto;
+  color: var(--muted);
+  text-align: center;
+}
+
+main,
+footer {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Controls */
+button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: 500 0.9rem var(--sans);
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--leaf);
+}
+
+button.main {
+  border-color: transparent;
+  background: var(--moss);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.main:hover {
+  background: var(--pine);
+}
+
+button.quiet {
+  background: transparent;
+}
+
+button.wide {
+  width: 100%;
+  margin-top: 10px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input,
+select {
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font: 0.9rem var(--sans);
+}
+
+label {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+input[type="range"] {
+  padding: 0;
+  accent-color: var(--moss);
+}
+
+/* A tree view */
+.view {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: 0 12px 30px -24px rgba(35, 69, 47, 0.6);
+}
+
+.grove {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.panel h2 {
+  margin: 0;
+  color: var(--pine);
+  font-size: 1.3rem;
+}
+
+.panel h3 {
+  margin: 18px 0 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary {
+  margin: 6px 0;
+  color: var(--muted);
+}
+
+.fact {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+}
+
+.fact strong {
+  color: var(--moss);
+}
+
+.keyform {
+  display: grid;
+  gap: 6px;
+}
+
+.keyrow {
+  display: flex;
+  gap: 6px;
+}
+
+.keyrow input {
+  flex: 1;
+  font: 600 1.05rem var(--mono);
+}
+
+.ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.degree {
+  margin-top: 12px;
+}
+
+.flows {
+  display: grid;
+  gap: 6px;
+}
+
+.flows button {
+  border-radius: 10px;
+  text-align: left;
+}
+
+.flows button small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* The stage with the tree */
+.stage {
+  min-width: 0;
+}
+
+.canvas {
+  min-height: 380px;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(111, 174, 95, 0.25), transparent 60%),
+    linear-gradient(180deg, #f3f9f2, #fbfaf3);
+  overflow: hidden;
+}
+
+.canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+}
+
+.canvas .empty {
+  padding: 150px 20px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.branch {
+  stroke: var(--bark);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.leaf circle {
+  fill: var(--leaf);
+  stroke: var(--moss);
+  stroke-width: 2;
+}
+
+.leaf.red circle {
+  fill: var(--berry);
+  stroke: #8e2a20;
+}
+
+.leaf.black circle {
+  fill: var(--char);
+  stroke: #000;
+}
+
+.leaf.mark circle,
+.leaf.mark rect {
+  stroke: var(--sun);
+  stroke-width: 5;
+}
+
+.leaf text {
+  fill: #fff;
+  font: 700 13px var(--sans);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.leaf .info {
+  fill: var(--muted);
+  font: 600 10px var(--mono);
+}
+
+.plank {
+  fill: var(--plank);
+  stroke: var(--bark);
+  stroke-width: 2;
+}
+
+.plank.mark {
+  stroke: var(--sun);
+  stroke-width: 5;
+}
+
+.slot {
+  stroke: var(--bark);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.bkey {
+  fill: var(--pine);
+  font: 700 13px var(--sans);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.bkey.mark {
+  fill: #9a6a00;
+}
+
+/* The array of a heap */
+.array {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.array span {
+  min-width: 38px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font: 600 0.8rem var(--mono);
+  text-align: center;
+}
+
+.array span small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 400;
+}
+
+.array span.mark {
+  border-color: var(--sun);
+  background: #fff6dc;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.player button {
+  width: 40px;
+  padding: 6px 0;
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter {
+  margin-left: auto;
+  color: var(--muted);
+  font: 0.8rem var(--mono);
+}
+
+.note {
+  min-height: 1.5em;
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-left: 4px solid var(--sun);
+  border-radius: 6px;
+  background: #fffaf0;
+  font-size: 1rem;
+}
+
+.note .kind {
+  margin-right: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--moss);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.note .kind.rotate,
+.note .kind.splay {
+  background: #b9770e;
+}
+
+.note .kind.recolor {
+  background: var(--berry);
+}
+
+.note .kind.split,
+.note .kind.merge,
+.note .kind.borrow {
+  background: var(--bark);
+}
+
+.note .kind.swap {
+  background: #5b6bb5;
+}
+
+.note .kind.missing {
+  background: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.stats div {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f1f6ee;
+}
+
+.stats dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.stats dd {
+  margin: 0;
+  font: 700 1.05rem var(--mono);
+}
+
+.log {
+  max-height: 150px;
+  margin: 12px 0 0;
+  padding: 0 0 0 22px;
+  overflow-y: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Compare and benchmark */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px 16px;
+}
+
+.groves {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mini {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mini h3 {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.mini h3 span {
+  color: var(--muted);
+  font: 0.8rem var(--mono);
+}
+
+.mini .canvas {
+  min-height: 180px;
+}
+
+.mini .canvas svg {
+  max-height: 240px;
+}
+
+.mini .canvas .empty {
+  padding: 70px 10px;
+}
+
+.table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 7px 10px 7px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.table th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.table td.num {
+  font-family: var(--mono);
+}
+
+.progress {
+  height: 6px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #e5ecdf;
+}
+
+.progress div {
+  width: 0;
+  height: 100%;
+  background: var(--moss);
+  transition: width 0.2s;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.chart h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 80px;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 0.82rem;
+}
+
+.bar-row .bar {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--leaf), var(--moss));
+}
+
+.bar-row .value {
+  font-family: var(--mono);
+  text-align: right;
+}
+
+footer {
+  padding-top: 24px;
+  padding-bottom: 40px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .grove {
+    grid-template-columns: 1fr;
+  }
+}
